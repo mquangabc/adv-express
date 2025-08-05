@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - <%= title %>
+  </title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+    }
+
+    .login-card {
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+    }
+
+    .login-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .form-control:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+
+    .btn-login {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      border-radius: 25px;
+      padding: 12px 30px;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .btn-login:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .password-toggle {
+      cursor: pointer;
+      color: #6c757d;
+    }
+
+    .password-toggle:hover {
+      color: #667eea;
+    }
+
+    .alert {
+      border-radius: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-6 col-lg-5">
+        <div class="login-card">
+          <!-- Header -->
+          <div class="login-header">
+            <i class="fas fa-user-circle fa-3x mb-3"></i>
+            <h3>Welcome Back</h3>
+            <p class="mb-0">Sign in to your account</p>
+          </div>
+
+          <!-- Form -->
+          <div class="p-4">
+            <!-- Flash Messages -->
+            <% if (typeof error !=='undefined' && error) { %>
+              <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <%= error %>
+                  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+              </div>
+              <% } %>
+
+                <% if (typeof success !=='undefined' && success) { %>
+                  <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <%= success %>
+                      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                  </div>
+                  <% } %>
+
+                    <form id="loginForm" action="/auth/login" method="POST">
+                      <!-- Email -->
+                      <div class="mb-3">
+                        <label for="email" class="form-label">
+                          <i class="fas fa-envelope me-2"></i>Email Address
+                        </label>
+                        <input type="email" class="form-control" id="email" name="email" required
+                          placeholder="Enter your email"
+                          value="<%= typeof formData !== 'undefined' ? formData.email || '' : '' %>">
+                        <div class="invalid-feedback"></div>
+                      </div>
+
+                      <!-- Password -->
+                      <div class="mb-3">
+                        <label for="password" class="form-label">
+                          <i class="fas fa-lock me-2"></i>Password
+                        </label>
+                        <div class="input-group">
+                          <input type="password" class="form-control" id="password" name="password" required
+                            placeholder="Enter your password">
+                          <span class="input-group-text password-toggle" onclick="togglePassword()">
+                            <i class="fas fa-eye" id="passwordIcon"></i>
+                          </span>
+                        </div>
+                        <div class="invalid-feedback"></div>
+                      </div>
+
+                      <!-- Remember Me -->
+                      <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                        <label class="form-check-label" for="remember">
+                          Remember me
+                        </label>
+                      </div>
+
+                      <!-- Submit Button -->
+                      <div class="d-grid mb-3">
+                        <button type="submit" class="btn btn-primary btn-login">
+                          <span class="spinner-border spinner-border-sm me-2 d-none" id="loginSpinner"></span>
+                          <i class="fas fa-sign-in-alt me-2"></i>
+                          Sign In
+                        </button>
+                      </div>
+
+                      <!-- Links -->
+                      <div class="text-center">
+                        <a href="/auth/forgot-password" class="text-decoration-none">
+                          Forgot your password?
+                        </a>
+                      </div>
+                    </form>
+
+                    <!-- Divider -->
+                    <hr class="my-4">
+
+                    <!-- Register Link -->
+                    <div class="text-center">
+                      <p class="mb-0">Don't have an account?</p>
+                      <a href="/auth/register" class="btn btn-outline-primary btn-sm mt-2">
+                        <i class="fas fa-user-plus me-2"></i>Create Account
+                      </a>
+                    </div>
+          </div>
+        </div>
+
+        <!-- Back to Home -->
+        <div class="text-center mt-3">
+          <a href="/" class="text-white text-decoration-none">
+            <i class="fas fa-arrow-left me-2"></i>Back to Home
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Password visibility toggle
+    function togglePassword() {
+      const passwordInput = document.getElementById('password');
+      const passwordIcon = document.getElementById('passwordIcon');
+
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        passwordIcon.className = 'fas fa-eye-slash';
+      } else {
+        passwordInput.type = 'password';
+        passwordIcon.className = 'fas fa-eye';
+      }
+    }
+
+    // Form validation and submission
+    document.getElementById('loginForm').addEventListener('submit', function (e) {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const spinner = document.getElementById('loginSpinner');
+
+      // Reset validation
+      document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+
+      let isValid = true;
+
+      // Email validation
+      if (!email || !email.includes('@')) {
+        document.getElementById('email').classList.add('is-invalid');
+        document.getElementById('email').nextElementSibling.textContent = 'Please enter a valid email address.';
+        isValid = false;
+      }
+
+      // Password validation
+      if (!password || password.length < 6) {
+        document.getElementById('password').classList.add('is-invalid');
+        document.querySelector('#password').parentNode.nextElementSibling.textContent = 'Password must be at least 6 characters.';
+        isValid = false;
+      }
+
+      if (!isValid) {
+        e.preventDefault();
+        return;
+      }
+
+      // Show loading spinner
+      spinner.classList.remove('d-none');
+      e.target.querySelector('button[type="submit"]').disabled = true;
+    });
+
+    // Auto-hide alerts after 5 seconds
+    setTimeout(() => {
+      document.querySelectorAll('.alert').forEach(alert => {
+        if (alert.classList.contains('show')) {
+          const bsAlert = new bootstrap.Alert(alert);
+          bsAlert.close();
+        }
+      });
+    }, 5000);
+  </script>
+</body>
+
+</html>
