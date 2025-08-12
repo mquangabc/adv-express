@@ -1,32 +1,40 @@
-import { Response } from "express";
-import { UserModel } from "../models/User";
-import { AuthenticatedRequest, UserUpdateInput } from "../types";
+import { Response } from 'express';
+import { UserModel } from '../models/User';
+import {
+  AuthenticatedRequest,
+  JWTPayload,
+  UserCreateInput,
+  UserUpdateInput,
+} from '../types';
+import jwt, { SignOptions } from 'jsonwebtoken';
 
 export class UserController {
-  async getUsers(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async getUsersData(page: number, limit: number) {
+    const result = await UserModel.findAll(page, limit);
+    return {
+      users: result.users.map((user) => UserModel.toSafeUser(user)),
+      pagination: {
+        page,
+        limit,
+        total: result.total,
+        totalPages: Math.ceil(result.total / limit),
+      },
+    };
+  }
+  async getUsers(req: AuthenticatedRequest, res: Response): Promise<any> {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
-
-      const result = await UserModel.findAll(page, limit);
-
-      res.json({
+      const users = {
         success: true,
-        data: {
-          users: result.users.map((user) => UserModel.toSafeUser(user)),
-          pagination: {
-            page,
-            limit,
-            total: result.total,
-            totalPages: Math.ceil(result.total / limit),
-          },
-        },
-      });
+        data: this.getUsersData(page, limit),
+      };
+      return users;
     } catch (error) {
       res.status(500).json({
         success: false,
-        message: "Failed to fetch users",
-        error: process.env.NODE_ENV === "development" ? error : undefined,
+        message: 'Failed to fetch users',
+        error: process.env.NODE_ENV === 'development' ? error : undefined,
       });
     }
   }
@@ -38,7 +46,7 @@ export class UserController {
       if (isNaN(userId)) {
         res.status(400).json({
           success: false,
-          message: "Invalid user ID",
+          message: 'Invalid user ID',
         });
         return;
       }
@@ -47,7 +55,7 @@ export class UserController {
       if (!user) {
         res.status(404).json({
           success: false,
-          message: "User not found",
+          message: 'User not found',
         });
         return;
       }
@@ -60,8 +68,8 @@ export class UserController {
     } catch (error) {
       res.status(500).json({
         success: false,
-        message: "Failed to fetch user",
-        error: process.env.NODE_ENV === "development" ? error : undefined,
+        message: 'Failed to fetch user',
+        error: process.env.NODE_ENV === 'development' ? error : undefined,
       });
     }
   }
@@ -74,18 +82,14 @@ export class UserController {
       if (isNaN(userId)) {
         res.status(400).json({
           success: false,
-          message: "Invalid user ID",
+          message: 'Invalid user ID',
         });
         return;
       }
 
-      // Check if user can update this profile
-      if (req.user?.id !== userId) {
-        res.status(403).json({
-          success: false,
-          message: "You can only update your own profile",
-        });
-        return;
+      const file = req.file;
+      if (file) {
+        updateData.avatar = `/uploads/${file.filename}`;
       }
 
       // Check if email/username already exists (if updating)
@@ -94,7 +98,7 @@ export class UserController {
         if (existingUser && existingUser.id !== userId) {
           res.status(409).json({
             success: false,
-            message: "Email already exists",
+            message: 'Email already exists',
           });
           return;
         }
@@ -107,7 +111,7 @@ export class UserController {
         if (existingUser && existingUser.id !== userId) {
           res.status(409).json({
             success: false,
-            message: "Username already exists",
+            message: 'Username already exists',
           });
           return;
         }
@@ -117,7 +121,7 @@ export class UserController {
       if (!updatedUser) {
         res.status(404).json({
           success: false,
-          message: "User not found",
+          message: 'User not found',
         });
         return;
       }
@@ -125,14 +129,14 @@ export class UserController {
       const safeUser = UserModel.toSafeUser(updatedUser);
       res.json({
         success: true,
-        message: "User updated successfully",
+        message: 'User updated successfully',
         data: { user: safeUser },
       });
     } catch (error) {
       res.status(500).json({
         success: false,
-        message: "Failed to update user",
-        error: process.env.NODE_ENV === "development" ? error : undefined,
+        message: 'Failed to update user',
+        error: process.env.NODE_ENV === 'development' ? error : undefined,
       });
     }
   }
@@ -144,16 +148,7 @@ export class UserController {
       if (isNaN(userId)) {
         res.status(400).json({
           success: false,
-          message: "Invalid user ID",
-        });
-        return;
-      }
-
-      // Check if user can delete this profile
-      if (req.user?.id !== userId) {
-        res.status(403).json({
-          success: false,
-          message: "You can only delete your own profile",
+          message: 'Invalid user ID',
         });
         return;
       }
@@ -162,20 +157,20 @@ export class UserController {
       if (!deleted) {
         res.status(404).json({
           success: false,
-          message: "User not found",
+          message: 'User not found',
         });
         return;
       }
 
       res.json({
         success: true,
-        message: "User deleted successfully",
+        message: 'User deleted successfully',
       });
     } catch (error) {
       res.status(500).json({
         success: false,
-        message: "Failed to delete user",
-        error: process.env.NODE_ENV === "development" ? error : undefined,
+        message: 'Failed to delete user',
+        error: process.env.NODE_ENV === 'development' ? error : undefined,
       });
     }
   }
@@ -187,7 +182,7 @@ export class UserController {
       if (isNaN(userId)) {
         res.status(400).json({
           success: false,
-          message: "Invalid user ID",
+          message: 'Invalid user ID',
         });
         return;
       }
@@ -196,7 +191,7 @@ export class UserController {
       if (req.user?.id !== userId) {
         res.status(403).json({
           success: false,
-          message: "You can only update your own avatar",
+          message: 'You can only update your own avatar',
         });
         return;
       }
@@ -205,7 +200,7 @@ export class UserController {
       if (!file) {
         res.status(400).json({
           success: false,
-          message: "No file uploaded",
+          message: 'No file uploaded',
         });
         return;
       }
@@ -218,7 +213,7 @@ export class UserController {
       if (!updatedUser) {
         res.status(404).json({
           success: false,
-          message: "User not found",
+          message: 'User not found',
         });
         return;
       }
@@ -226,15 +221,92 @@ export class UserController {
       const safeUser = UserModel.toSafeUser(updatedUser);
       res.json({
         success: true,
-        message: "Avatar uploaded successfully",
+        message: 'Avatar uploaded successfully',
         data: { user: safeUser },
       });
     } catch (error) {
       res.status(500).json({
         success: false,
-        message: "Failed to upload avatar",
-        error: process.env.NODE_ENV === "development" ? error : undefined,
+        message: 'Failed to upload avatar',
+        error: process.env.NODE_ENV === 'development' ? error : undefined,
       });
     }
+  }
+
+  async createUser(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const userData: UserCreateInput = req.body;
+
+      // Check if user already exists
+      const existingUserByEmail = await UserModel.findByEmail(userData.email);
+      if (existingUserByEmail) {
+        res.status(409).json({
+          success: false,
+          message: 'User with this email already exists',
+        });
+        return;
+      }
+
+      const existingUserByUsername = await UserModel.findByUsername(
+        userData.username
+      );
+      if (existingUserByUsername) {
+        res.status(409).json({
+          success: false,
+          message: 'User with this username already exists',
+        });
+        return;
+      }
+
+      const file = req.file;
+      if (file) {
+        userData.avatar = `/uploads/${file.filename}`;
+      }
+
+      // Create new user
+      const user = await UserModel.create(userData);
+      const safeUser = UserModel.toSafeUser(user);
+
+      // Create JWT token
+      const token = this.generateToken(user);
+
+      // Set session
+      req.session.user = {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+      };
+
+      res.status(201).json({
+        success: true,
+        message: 'User registered successfully',
+        data: {
+          user: safeUser,
+          token,
+        },
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to register user',
+        error: process.env.NODE_ENV === 'development' ? error : undefined,
+      });
+    }
+  }
+
+  private generateToken(user: any): string {
+    const payload: JWTPayload = {
+      userId: user.id,
+      email: user.email,
+      username: user.username,
+    };
+
+    const jwtSecret = process.env.JWT_SECRET || 'your-secret-key';
+
+    const options: SignOptions = {
+      expiresIn: '7d',
+    };
+
+    return jwt.sign(payload, jwtSecret, options);
   }
 }

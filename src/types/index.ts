@@ -1,4 +1,4 @@
-import { Request } from "express";
+import { Request } from 'express';
 
 export interface User {
   id: number;
@@ -19,6 +19,7 @@ export interface UserCreateInput {
   password: string;
   firstName?: string;
   lastName?: string;
+  avatar?: string;
 }
 
 export interface UserUpdateInput {
@@ -44,7 +45,7 @@ export interface AuthenticatedRequest extends Request {
   user?: User;
 }
 
-declare module "express-session" {
+declare module 'express-session' {
   interface SessionData {
     user: {
       id: number;

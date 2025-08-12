@@ -1,66 +1,47 @@
-import express from "express";
-import { authenticateSession } from "../middleware/auth";
-import { UserModel } from "../models/User";
+import express from 'express';
+import { checkLogin } from '../../middleware/auth';
+import { UserModel } from '../../models/User';
 
 const router = express.Router();
 
 // Auth Pages Routes
-router.get("/login", (req, res) => {
-  // Redirect to dashboard if already logged in
-  if (req.session?.user) {
-    return res.redirect("/dashboard");
-  }
-
-  res.render("login", {
-    title: "Login",
+router.get('/login', checkLogin, (req, res) => {
+  res.render('login', {
+    title: 'Login',
     error: req.query.error || null,
     success: req.query.success || null,
     formData: {},
   });
 });
 
-router.get("/register", (req, res) => {
-  // Redirect to dashboard if already logged in
-  if (req.session?.user) {
-    return res.redirect("/dashboard");
-  }
-
-  res.render("register", {
-    title: "Register",
+router.get('/register', checkLogin, (req, res) => {
+  res.render('register', {
+    title: 'Register',
     error: req.query.error || null,
     formData: {},
   });
 });
 
-// Dashboard Route (Protected)
-router.get("/dashboard", authenticateSession, (req, res) => {
-  res.render("dashboard", {
-    title: "Dashboard",
-    user: req.session?.user || null,
-  });
-});
-
 // Auth Form Handlers (Session-based)
-router.post("/login", async (req, res) => {
+router.post('/login', async (req, res) => {
   try {
     const { email, password, remember } = req.body;
-
     // Find user and validate password
     const user = await UserModel.findByEmail(email);
 
     if (!user) {
-      return res.render("login", {
-        title: "Login",
-        error: "Invalid email or password",
+      return res.render('login', {
+        title: 'Login',
+        error: 'Invalid email or password',
         formData: { email },
       });
     }
 
     const isValidPassword = await UserModel.validatePassword(user, password);
     if (!isValidPassword) {
-      return res.render("login", {
-        title: "Login",
-        error: "Invalid email or password",
+      return res.render('login', {
+        title: 'Login',
+        error: 'Invalid email or password',
         formData: { email },
       });
     }
@@ -83,27 +64,27 @@ router.post("/login", async (req, res) => {
     }
 
     // Redirect to dashboard
-    res.redirect("/dashboard");
+    res.redirect('/dashboard');
   } catch (error) {
-    console.error("Login error:", error);
-    res.render("login", {
-      title: "Login",
-      error: "An error occurred during login. Please try again.",
+    console.error('Login error:', error);
+    res.render('login', {
+      title: 'Login',
+      error: 'An error occurred during login. Please try again.',
       formData: { email: req.body.email },
     });
   }
 });
 
-router.post("/register", async (req, res) => {
+router.post('/register', async (req, res) => {
   try {
     const { username, email, password, confirmPassword, firstName, lastName } =
       req.body;
 
     // Validate passwords match
     if (password !== confirmPassword) {
-      return res.render("register", {
-        title: "Register",
-        error: "Passwords do not match",
+      return res.render('register', {
+        title: 'Register',
+        error: 'Passwords do not match',
         formData: { username, email, firstName, lastName },
       });
     }
@@ -111,18 +92,18 @@ router.post("/register", async (req, res) => {
     // Check if user already exists
     const existingUserByEmail = await UserModel.findByEmail(email);
     if (existingUserByEmail) {
-      return res.render("register", {
-        title: "Register",
-        error: "User with this email already exists",
+      return res.render('register', {
+        title: 'Register',
+        error: 'User with this email already exists',
         formData: { username, email, firstName, lastName },
       });
     }
 
     const existingUserByUsername = await UserModel.findByUsername(username);
     if (existingUserByUsername) {
-      return res.render("register", {
-        title: "Register",
-        error: "User with this username already exists",
+      return res.render('register', {
+        title: 'Register',
+        error: 'User with this username already exists',
         formData: { username, email, firstName, lastName },
       });
     }
@@ -149,12 +130,12 @@ router.post("/register", async (req, res) => {
     };
 
     // Redirect to dashboard
-    res.redirect("/dashboard");
+    res.redirect('/dashboard');
   } catch (error) {
-    console.error("Registration error:", error);
-    res.render("register", {
-      title: "Register",
-      error: "An error occurred during registration. Please try again.",
+    console.error('Registration error:', error);
+    res.render('register', {
+      title: 'Register',
+      error: 'An error occurred during registration. Please try again.',
       formData: {
         username: req.body.username,
         email: req.body.email,
@@ -163,27 +144,6 @@ router.post("/register", async (req, res) => {
       },
     });
   }
-});
-
-// Logout Route
-router.get("/logout", (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      console.error("Logout error:", err);
-      return res.redirect("/dashboard");
-    }
-
-    res.clearCookie("connect.sid"); // Clear session cookie
-    res.redirect("/?success=Logged out successfully");
-  });
-});
-
-// Profile Route (Protected)
-router.get("/profile", authenticateSession, (req, res) => {
-  res.render("profile", {
-    title: "Profile",
-    user: req.session?.user || null,
-  });
 });
 
 export default router;

@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm uninstall:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run dev:*)",
+      "Bash(knex migrate:make:*)",
+      "Bash(npx knex migrate:*)",
+      "Bash(node:*)",
+      "Bash(rm:*)",
+      "Bash(npm run migrate:*)",
+      "Bash(mkdir:*)"
+    ],
+    "deny": []
+  }
+}
