@@ -9,9 +9,8 @@ export const authenticateToken = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-
+    // Get token from cookie instead of Authorization header
+    const token = req.cookies?.auth_token;
     if (!token) {
       res.status(401).json({ message: 'Access token required' });
       return;
@@ -69,8 +68,8 @@ export const optionalAuth = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+    // Get token from cookie instead of Authorization header
+    const token = req.cookies?.auth_token;
 
     if (token) {
       const jwtSecret = process.env.JWT_SECRET || 'your-secret-key';

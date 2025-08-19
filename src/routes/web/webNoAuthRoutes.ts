@@ -1,4 +1,5 @@
 import express from 'express';
+import jwt from 'jsonwebtoken';
 import { checkLogin } from '../../middleware/auth';
 import { UserModel } from '../../models/User';
 
@@ -21,7 +22,6 @@ router.get('/register', checkLogin, (req, res) => {
     formData: {},
   });
 });
-
 // Auth Form Handlers (Session-based)
 router.post('/login', async (req, res) => {
   try {
@@ -46,7 +46,29 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // Set session
+    // Generate JWT token
+    const jwtSecret = process.env.JWT_SECRET || 'your-secret-key';
+    const tokenExpiry = remember ? '30d' : '1d';
+    const token = jwt.sign(
+      { 
+        userId: user.id,
+        username: user.username,
+        email: user.email
+      },
+      jwtSecret,
+      { expiresIn: tokenExpiry }
+    );
+
+    // Set JWT token as HTTP-only cookie
+    const cookieMaxAge = remember ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+    res.cookie('auth_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: cookieMaxAge,
+      sameSite: 'lax'
+    });
+
+    // Keep session for backward compatibility with web routes
     req.session.user = {
       id: user.id,
       username: user.username,
@@ -56,7 +78,6 @@ router.post('/login', async (req, res) => {
       avatar: user.avatar || undefined,
     };
 
-    // Set session expiry based on remember me
     if (remember) {
       req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
     } else {
@@ -119,7 +140,27 @@ router.post('/register', async (req, res) => {
 
     const user = await UserModel.create(userData);
 
-    // Set session
+    // Generate JWT token for registration
+    const jwtSecret = process.env.JWT_SECRET || 'your-secret-key';
+    const token = jwt.sign(
+      { 
+        userId: user.id,
+        username: user.username,
+        email: user.email
+      },
+      jwtSecret,
+      { expiresIn: '1d' }
+    );
+
+    // Set JWT token as HTTP-only cookie
+    res.cookie('auth_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+      sameSite: 'lax'
+    });
+
+    // Set session for backward compatibility
     req.session.user = {
       id: user.id,
       username: user.username,

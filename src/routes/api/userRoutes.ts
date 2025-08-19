@@ -37,12 +37,14 @@ router.post(
 
 router.post(
   '/create',
+  authenticateToken,
   upload.single('avatar'),
   userController.createUser.bind(userController)
 );
 
 router.post(
   '/update/:id',
+  authenticateToken,
   upload.single('avatar'),
   userController.updateUser.bind(userController)
 );

@@ -1,11 +1,11 @@
 import express from 'express';
-import { authenticateSession } from '../../middleware/auth';
+import { authenticateToken } from '../../middleware/auth';
 import { UserController } from '../../controllers/UserController';
 
 const router = express.Router();
 const userController = new UserController();
 // Dashboard Route (Protected)
-router.get('/dashboard', authenticateSession, (req, res) => {
+router.get('/dashboard', authenticateToken, (req, res) => {
   res.render('admin/dashboard', {
     title: 'Dashboard',
     user: req.session?.user || null,
@@ -26,14 +26,14 @@ router.get('/logout', (req, res) => {
 });
 
 // Profile Route (Protected)
-router.get('/profile', authenticateSession, (req, res) => {
+router.get('/profile', authenticateToken, (req, res) => {
   res.render('admin/profile', {
     title: 'Profile',
     user: req.session?.user || null,
   });
 });
 
-router.get('/user', authenticateSession, async (req, res) => {
+router.get('/user', authenticateToken, async (req, res) => {
   const data = await userController.getUsersData(1, 20);
   console.log(data);
   res.render('admin/user', {
